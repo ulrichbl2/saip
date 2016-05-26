@@ -1,0 +1,28 @@
+<!-- Ivy dependency file for the TM16 case -->
+
+<ivy-module version="2.0">
+  <info organisation="baerbak.com" module="tm16"/>
+  <dependencies>
+    <!-- JUnit unit testing -->
+    <dependency org="junit" name="junit" rev="4.12"/>
+    
+    <!-- Gson for JSON handling -->
+    <dependency org="com.google.code.gson" name="gson" rev="2.5"/>
+    
+    <!-- SLF4J logging and binding -->
+    <dependency org="org.slf4j" name="slf4j-api" rev="1.7.14"/>
+    <dependency org="org.slf4j" name="slf4j-simple" rev="1.7.14"/>
+
+    <!-- REST -->
+    <dependency org="com.mashape.unirest" name="unirest-java" rev="1.4.8"/>
+    <dependency org="com.sparkjava" name="spark-core" rev="2.3"/>
+
+    <!-- MongoDB driver -->
+    <dependency org="org.mongodb" name="mongo-java-driver" rev="3.2.2"/>
+    
+    <!-- Added by Group Foxtrot -->
+    <!--  Nimbus for JSON Tokens (JWT) -->
+    <dependency org="com.nimbusds" name="nimbus-jose-jwt" rev="4.16.2"/>
+
+  </dependencies>
+</ivy-module>

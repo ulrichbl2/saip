@@ -1,0 +1,311 @@
+<!-- ==== TM16 ==== 
+     
+     Case study architecture in distributed computing
+       inspired by Home Tele Medicine
+     
+     Author: Henrik Baerbak Christensen, CS at Aarhus University
+     
+     *** Find more information on the course's web site ***
+
+     Quick guideslines - just run 'ant help' or 'ant -p'
+
+-->
+<project name="TM16" default="help" basedir="."
+	 xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <property name="src.dir" value="src"/>
+  <property name="test.src.dir" value="test"/>
+  <property name="lib.dir" value="lib" />
+  <property name="resources" value="resources"></property>
+
+  <property name="build.dir" value="build"/>
+  <property name="resource.dir" value="resource"/>
+  <property name="javadoc.dir" value="doc"/>
+
+  <property name="test.output.directory" value="TEST-RESULT"/>
+
+
+  <target name="help">
+    <echo>
+TeleMed TM16 - Case Study in tele medicine
+  Targets :
+    === Automated testing ===
+ 
+    test:      Run JUnit unit- and integration tests
+       Find the output in folder 'TEST-RESULTS'
+    	
+    === Householding ===
+
+    clean:     Removes all bytecode, clean the project
+    javadoc:   Generate JavaDoc (output in doc/index.html)
+
+    === Execution of TM16 stories ===
+
+    Start the 'server' in one shell, and run 'home' multiple times
+      in another to send observations to the server.
+
+    server:
+      Start the Servlet based server, hit ctrl-c to stop it again 
+      Defaults to: In-memory database
+
+      Set parameters to change it to:    
+        -Dtype={host} : hostname/ip of MongoDB server on port 27017,
+                        if set to 'memory' it defaults to in memory db
+
+    home: 
+      Execute a 'measurement' and upload from the home
+      Defaults to: 'store' bloodpressure (120,70) for 'pid01'
+
+      Set parameters to change it to:
+      -Did=(id)   : do operation on patient with given id
+      -Dsys=(s)   : store systolic pressure 's'
+      -Ddia=(f)   : store diastolic pressure 'd'
+      -Dhost=(h)  : hostname or IP of server (default: localhost)
+
+    To review uploaded tele observations, point your web browser to
+      localhost:4567/bp/{patientid}
+
+    === REST ===
+
+    serverRest:  Start the TM16 REST server 
+    crud:        Execute a single CRUD scenario using REST server
+
+      Both have several parameters to control host and port, see
+      inside the build.xml
+
+    === FRS Chapter related ===
+    	
+    [NOTE: These targets are not really related to SAiP course]
+
+    serverSocket:
+      Start the TM16 socket based server (in-memory DB variant)
+       (Does NOT support the GP browsing scenario, there is no
+        web server involved!)
+    
+    homeSocket:
+      Execute a single operation of the home client
+      Defaults to: 'store' bloodpressure (120,70) for Nancy
+      
+      Set parameters to change it to:
+      -Dop=fetch  : fetch last weeks blood pressure measurements
+      -Did=(id)   : do operation on patient with given id
+      -Dsys=(s)   : store systolic pressure 's'
+      -Ddia=(f)   : store diastolic pressure 'd'
+
+      Examples:
+
+       ant homeSocket -Did=pid001 -Dsys=156 -Ddia=87
+            = store blood pressure (156,87) for patient 'pid001'
+
+       ant homeSocket -Dop=fetch -Did=pid001
+           = fetch last week's measurements for patient 'pid001'
+
+  Author: Henrik Baerbak Christensen / Aarhus University
+    	  www.baerbak.com / 2016
+    </echo>
+  </target>
+  
+  <!-- paths used for compilation and run  -->
+  <path id="lib.path.id">
+    <fileset dir="${lib.dir}" />
+  </path>
+
+  <path id="run.path.id">
+    <path refid="lib.path.id" />
+    <path location="${build.dir}" />
+  </path>
+
+  <!-- Ivy resolution -->
+  <target name="resolve" 
+	  description="--> Retreive dependencies with ivy">
+    <ivy:retrieve/>
+  </target>    
+  
+  <target name="report" depends="resolve" 
+	  description="--> Generates a report of dependencies">
+    <ivy:report todir="${build.dir}"/>
+  </target>
+
+  <!-- House holding -->
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+    <delete dir="${javadoc.dir}"/>
+    <delete dir="${lib.dir}"/>
+    <delete dir="${test.output.directory}"/>
+  </target>
+  
+  <target name="prepare">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${javadoc.dir}"/>
+    <mkdir dir="${test.output.directory}"/>
+  </target>
+
+  <!-- Compilation and building -->
+  <target name="build.src" depends="prepare,resolve">
+    <javac srcdir="${src.dir}"
+	   destdir="${build.dir}"
+	   includeantruntime="false"
+	   debug="on"  
+	   classpathref="lib.path.id" 
+	   includeAntRuntime="false">
+    </javac>
+  </target>
+  
+  <target name="build.test" depends="build.src">
+    <javac srcdir="${test.src.dir}"
+	   destdir="${build.dir}"
+	   includeantruntime="false"
+	   debug = "on" 
+	   classpathref="lib.path.id" 
+	   includeAntRuntime="false">
+    </javac>
+  </target>
+  
+  <target name="copy.resource">
+    <copy todir="${build.dir}" >
+      <fileset dir="${resources}">
+	<include name="java.policy"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="build.all" depends="build.src,build.test,copy.resource"/>
+
+  <!-- JUnit testing -->
+  <target name="test"  depends="build.all"
+          description="--> Run JUnit unit tests">
+    <junit printsummary="yes" fork="yes" 
+	   forkmode="once"
+	   haltonfailure="yes">
+      <formatter type="plain"/>
+      <batchtest fork="yes" todir="${test.output.directory}">
+	<fileset dir="${test.src.dir}">
+	  <include name="**/Test*.java"/>
+	</fileset>
+      </batchtest>
+      <classpath refid="run.path.id"/>
+    </junit>
+  </target>
+
+  <target name="test.integration"  depends="build.all"
+          description="--> Run JUnit integration tests">
+    <echo message="IMPORTANT: Services must be running!"/>
+    <junit printsummary="yes" fork="yes" 
+	   forkmode="once"
+	   haltonfailure="yes">
+      <formatter type="plain"/>
+      <batchtest fork="yes" todir="${test.output.directory}">
+	<fileset dir="${test.src.dir}">
+	  <include name="**/IntegrationTest*.java"/>
+	</fileset>
+      </batchtest>
+      <classpath refid="run.path.id"/>
+    </junit>
+  </target>
+
+
+  <!-- JavaDoc -->
+  <target name="mkdirdoc">
+    <mkdir dir="${javadoc.dir}"></mkdir>
+  </target>
+
+  <target name="javadoc" depends="clean,build.src"
+          description="--> Generate JavaDoc">
+    <javadoc
+      source = "1.8"
+      packagenames="cs.saip.*"
+      sourcepath="${src.dir}"
+      destdir="${javadoc.dir}"
+      package="true"
+      doctitle="&lt;b&gt;TM16&lt;/b&gt;"
+      bottom="&lt;b&gt;Authored by Henrik B. Christensen &lt;/b&gt;"
+      windowtitle="HomeMonitoring" >
+      <sourcepath> 
+	<pathelement path="${src.dir}"/> 
+      </sourcepath>
+      <classpath> 
+	<path refid="run.path.id"/> 
+      </classpath>
+    </javadoc>
+    <echo message="Javadoc is in folder: ${javadoc.dir}."/>
+  </target>
+
+  <!-- Execution / Http server w. URI Tunneling -->
+  <property name="type" value="memory"/>
+  <target name="server"  depends="build.all"
+          description="--> Run TeleMed server (HTTP/URI Tunnel)">
+    <java classname="cs.saip.main.ServerMain" 
+	  fork="yes"
+	  classpathref="run.path.id">
+      <arg value="${type}"/>
+    </java>
+  </target>
+
+  <property name="id" value="pid01"/>
+  <property name="sys" value="120"/>
+  <property name="dia" value="70"/>
+  <property name="host" value="localhost"/>
+
+  <target name="home"  depends="build.all"
+          description="--> Execute home client (HTTP/URI Tunnel)">
+    <java classname="cs.saip.main.HomeClient" 
+          fork="yes"
+          classpathref="run.path.id">
+      <arg value="${id}"/>
+      <arg value="${sys}"/>
+      <arg value="${dia}"/>
+      <arg value="${host}"/>
+    </java>
+  </target>
+
+  <!-- Execution / REST -->
+  <property name="host" value="localhost"/>
+  <property name="port" value="4567"/>
+  <property name="no-delete" value="false"/>
+
+  <target name="serverRest"  depends="build.all"
+          description="--> Run Spark-java based TeleMed REST server">
+    <java classname="cs.saip.main.RestServerMain" 
+	  fork="yes"
+	  classpathref="run.path.id">
+      <arg value="${port}"/>
+      <arg value="${type}"/>
+    </java>
+  </target>
+
+  <target name="crud"  depends="build.all"
+          description="--> Execute CRUD scenario on REST server">
+    <java classname="cs.saip.main.RestCRUDClient" 
+          classpathref="run.path.id">
+      <arg value="${host}"/>
+      <arg value="${port}"/>
+      <arg value="${no-delete}"/>
+    </java>
+  </target>
+
+  <!-- Execution / Socket based -->
+  <target name="serverSocket"  depends="build.all"
+          description="--> Run TeleMed server (Socket)">
+    <java classname="cs.saip.main.SocketServerMain" 
+	  fork="yes"
+	  classpathref="run.path.id">
+      <arg value="memory"/>
+    </java>
+  </target>
+
+  <property name="op" value="store"/>
+
+  <target name="homeSocket"  depends="build.all"
+          description="--> Execute home client (Socket)">
+    <java classname="cs.saip.main.SocketHomeClient" 
+          fork="yes"
+          classpathref="run.path.id">
+      <arg value="${op}"/>
+      <arg value="${id}"/>
+      <arg value="${sys}"/>
+      <arg value="${dia}"/>
+      <arg value="${host}"/>
+    </java>
+  </target>
+
+</project>
