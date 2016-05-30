@@ -21,13 +21,13 @@ public class TeleMedServant implements TeleMed, Servant {
 
   private XDSBackend xds;
   private Authorization autorization;
-  
+
 
   public TeleMedServant(XDSBackend xds, Authorization atz) {
     this.xds = xds;
     this.autorization = atz;
   }
-  
+
   public void SetAuthorization(Authorization atz)
   {
     this.autorization = atz;
@@ -37,24 +37,29 @@ public class TeleMedServant implements TeleMed, Servant {
   public String processAndStore(TeleObservation teleObs, String accessToken) {
 
     // Verify that accessToken is allowed to store observation    
-    if(this.autorization.allowWritePatientData(accessToken, teleObs.getPatientId()))
-    {
+    try {
+      if(this.autorization.allowWritePatientData(accessToken, teleObs.getPatientId()))
+      {
         // Generate the XML document representing the
         // observation in HL7 (HealthLevel7) format.
         HL7Builder builder = new HL7Builder();   
         Director.construct(teleObs, builder);
         Document hl7Document = builder.getResult();
-        
+
         // Generate the metadata for the observation
         MetadataBuilder metaDataBuilder = new MetadataBuilder();
         Director.construct(teleObs, metaDataBuilder);
         MetaData metadata = metaDataBuilder.getResult();
-        
+
         // Finally store the document in the XDS storage system
         String uniqueId = null;
         uniqueId = xds.provideAndRegisterDocument(metadata, hl7Document);
-        
+
         return uniqueId;
+      }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
     return "-1";
   }
@@ -63,53 +68,64 @@ public class TeleMedServant implements TeleMed, Servant {
   public List<TeleObservation> getObservationsFor(String patientId, TimeInterval interval, String accessToken) 
   {
     // Verify that accessToken is allowed to get observation    
-    if(this.autorization.allowReadPatientData(accessToken, patientId))
-    {
-      List<TeleObservation> teleObsList = new ArrayList<>();
-      // Calculate the time interval to search within
-      LocalDateTime now = LocalDateTime.now(); 
-      LocalDateTime someTimeAgo = null;
-      if (interval == TimeInterval.LAST_DAY) {
-        someTimeAgo = now.minusDays(1);
-      } else if (interval == TimeInterval.LAST_WEEK) {
-        someTimeAgo = now.minusDays(7);
-      } else {
-        someTimeAgo = now.minusMonths(1);
+    try {
+      if(this.autorization.allowReadPatientData(accessToken, patientId))
+      {
+        List<TeleObservation> teleObsList = new ArrayList<>();
+        // Calculate the time interval to search within
+        LocalDateTime now = LocalDateTime.now(); 
+        LocalDateTime someTimeAgo = null;
+        if (interval == TimeInterval.LAST_DAY) {
+          someTimeAgo = now.minusDays(1);
+        } else if (interval == TimeInterval.LAST_WEEK) {
+          someTimeAgo = now.minusDays(7);
+        } else {
+          someTimeAgo = now.minusMonths(1);
+        }
+
+        // Query the database for those HL7 documents that match query
+        List<Document> docList = xds.retriveDocumentSet(patientId, someTimeAgo, now);
+
+        // Sigh - have to convert back from XML to a TeleObservation
+        docList.stream().forEach( (d) -> { 
+          TeleObservation to = createTeleObsFromHL7Document(d);
+          teleObsList.add(to);
+        } );
+        return teleObsList;
       }
-  
-      // Query the database for those HL7 documents that match query
-      List<Document> docList = xds.retriveDocumentSet(patientId, someTimeAgo, now);
-      
-      // Sigh - have to convert back from XML to a TeleObservation
-      docList.stream().forEach( (d) -> { 
-        TeleObservation to = createTeleObsFromHL7Document(d);
-        teleObsList.add(to);
-      } );
-      return teleObsList;
+      else
+      {
+        return null;
+      }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
-    else
-    {
-      return null;
-    }
+    return null;
   }
 
   @Override
   public TeleObservation getObservation(String uniqueId, String accessToken) {
-    
+
     Document doc = xds.retriveDocument(uniqueId);
     if (doc == null) { return null; }
-    
+
     // Verify that accessToken is allowed to get observation
     TeleObservation teleObs = createTeleObsFromHL7Document(doc);
-    if(this.autorization.allowReadPatientData(accessToken, teleObs.getPatientId()))
-    {
-      return teleObs;
+    try {
+      if(this.autorization.allowReadPatientData(accessToken, teleObs.getPatientId()))
+      {
+        return teleObs;
+      }
+      else
+      {
+        return null;
+      }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
-    else
-    {
-      return null;
-    }
-      
+    return null;
   }
 
   @Override
@@ -119,22 +135,27 @@ public class TeleMedServant implements TeleMed, Servant {
     if (doc == null) { return false; }
 
     TeleObservation oldTeleObs = createTeleObsFromHL7Document(doc);
-    
+
     // Verify that the accessToken is allowed to edit data for both PatientId (they may be the same)
-    if(this.autorization.allowWritePatientData(accessToken, oldTeleObs.getPatientId()) 
-        && this.autorization.allowWritePatientData(accessToken, to.getPatientId()) )
-    {
-      // Maintain the time stamp, cannot be corrected
-      LocalDateTime originalTime = getTimeFromHL7Document(doc);
-      to.setTime(originalTime);
-      
-      // Create a new document from the given tele obs
-      HL7Builder builder = new HL7Builder();   
-      Director.construct(to, builder);
-      Document hl7Document = builder.getResult();
-  
-      // and correct it in the XDS backtier
-      return xds.correctDocument(uniqueId, XDSBackend.Operation.UPDATE, hl7Document);
+    try {
+      if(this.autorization.allowWritePatientData(accessToken, oldTeleObs.getPatientId()) 
+          && this.autorization.allowWritePatientData(accessToken, to.getPatientId()) )
+      {
+        // Maintain the time stamp, cannot be corrected
+        LocalDateTime originalTime = getTimeFromHL7Document(doc);
+        to.setTime(originalTime);
+
+        // Create a new document from the given tele obs
+        HL7Builder builder = new HL7Builder();   
+        Director.construct(to, builder);
+        Document hl7Document = builder.getResult();
+
+        // and correct it in the XDS backtier
+        return xds.correctDocument(uniqueId, XDSBackend.Operation.UPDATE, hl7Document);
+      }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
     return false;
   }
@@ -145,10 +166,15 @@ public class TeleMedServant implements TeleMed, Servant {
     if (doc == null) { return false; }
 
     TeleObservation teleObs = createTeleObsFromHL7Document(doc);
-    
-    if(this.autorization.allowWritePatientData(accessToken, teleObs.getPatientId()))
-    {
-      return xds.correctDocument(uniqueId, XDSBackend.Operation.DELETE, null);
+
+    try {
+      if(this.autorization.allowWritePatientData(accessToken, teleObs.getPatientId()))
+      {
+        return xds.correctDocument(uniqueId, XDSBackend.Operation.DELETE, null);
+      }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
     return false;
   }
@@ -159,7 +185,7 @@ public class TeleMedServant implements TeleMed, Servant {
     String sysAsString = XMLUtility.getValueOfAttrNamedInNodeIndexNamedEnclosedInNodeInDoc("value", 0, "value", "observation", d);
     String diaAsString = XMLUtility.getValueOfAttrNamedInNodeIndexNamedEnclosedInNodeInDoc("value", 1, "value", "observation", d);
     String localpatientId = XMLUtility.getValueOfAttrNamedInNodeIndexNamedEnclosedInNodeInDoc("extension", 0, "id", "patient", d);
-    
+
     // Create the tele observation
     to = new TeleObservation(localpatientId, Double.parseDouble(sysAsString), Double.parseDouble(diaAsString));
 

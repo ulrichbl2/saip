@@ -1,7 +1,9 @@
 package cs.saip.main;
 
+import java.util.logging.*;
+
 import cs.saip.appserver.TeleMedServant;
-import cs.saip.authorization.AuthorizationStub;
+import cs.saip.authorization.JWTAuthorizationImpl;
 import cs.saip.domain.*;
 import cs.saip.doubles.FakeObjectXDSDatabase;
 import cs.saip.ipc.rest.RESTServerRequestHandlerInvoker;
@@ -31,7 +33,9 @@ public class RestServerMain {
     // Define the server side delegates
     XDSBackend xds = null;
     xds = new FakeObjectXDSDatabase();
-    Authorization atz = new AuthorizationStub();
+    Logger logger = Logger.getLogger("TM16Logger");
+    logger.addHandler(new StreamHandler(System.out, new SimpleFormatter()));
+    Authorization atz = new JWTAuthorizationImpl(logger);
     
     TeleMed tsServant = new TeleMedServant(xds, atz);
 

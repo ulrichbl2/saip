@@ -4,12 +4,13 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.logging.*;
 
 import org.junit.*;
 
 import cs.saip.appserver.*;
 import cs.saip.authentication.AuthenticationStub;
-import cs.saip.authorization.AuthorizationStub;
+import cs.saip.authorization.JWTAuthorizationImpl;
 import cs.saip.broker.*;
 import cs.saip.client.*;
 import cs.saip.domain.*;
@@ -25,6 +26,7 @@ public class FoxtrotTest_Auth
 
   private Authentication authentication;
   private Authorization authorization;
+  private static Logger logger;
   
   private String pt1AccessToken, pt2AccessToken, dt1AccessToken, dt2AccessToken, UnknownPwd1AcessToken, UnknownUserAccessToken;
   
@@ -35,8 +37,12 @@ public class FoxtrotTest_Auth
   @Before
   public void setup()
   {
+    // Simple ConsoleLogger for test usages - any type of Logger that satisfies the Logging interface will do
+    // Implementation not important to AP
+    logger = Logger.getLogger("TM16Logger");
+    
     authentication = new AuthenticationStub();
-    authorization = new AuthorizationStub();
+    authorization = new JWTAuthorizationImpl(logger);
     
     // Create 2 patients and 2 doctors and 2 invalid users
     pt1AccessToken = new String();
@@ -48,21 +54,21 @@ public class FoxtrotTest_Auth
     
     // Authenticate the 6 users
     authentication.authenticate("KnownPatient1", "KnownPassword"); // Patient 1
-    pt1AccessToken = new AuthorizationStub().createAccessToken(authentication.getSystemName("KnownPatient1"));
+    pt1AccessToken = new JWTAuthorizationImpl(logger).createAccessToken(authentication.getSystemName("KnownPatient1"));
     authentication.authenticate("KnownPatient2", "KnownPassword"); // Patient 2
-    pt2AccessToken = new AuthorizationStub().createAccessToken(authentication.getSystemName("KnownPatient2"));
+    pt2AccessToken = new JWTAuthorizationImpl(logger).createAccessToken(authentication.getSystemName("KnownPatient2"));
     authentication.authenticate("KnownDoctor1", "KnownPassword"); // Doctor 1
-    dt1AccessToken = new AuthorizationStub().createAccessToken(authentication.getSystemName("KnownDoctor1"));
+    dt1AccessToken = new JWTAuthorizationImpl(logger).createAccessToken(authentication.getSystemName("KnownDoctor1"));
     authentication.authenticate("KnownDoctor2", "KnownPassword"); // Doctor 2
-    dt2AccessToken = new AuthorizationStub().createAccessToken(authentication.getSystemName("KnownDoctor2"));
+    dt2AccessToken = new JWTAuthorizationImpl(logger).createAccessToken(authentication.getSystemName("KnownDoctor2"));
     if (authentication.authenticate("KnownDoctor2", "UnKnownPassword")) { // Doctor 2 but wrong password
-      UnknownPwd1AcessToken = new AuthorizationStub().createAccessToken(authentication.getSystemName("KnownDoctor2"));
+      UnknownPwd1AcessToken = new JWTAuthorizationImpl(logger).createAccessToken(authentication.getSystemName("KnownDoctor2"));
     }
     else {
       UnknownPwd1AcessToken = null;
     }
     if (authentication.authenticate("UnKnownDoctor3", "UnKnownPassword")) { // Doctor 3 = Unknown user
-      UnknownUserAccessToken = new AuthorizationStub().createAccessToken(authentication.getSystemName("UnKnownDoctor3"));
+      UnknownUserAccessToken = new JWTAuthorizationImpl(logger).createAccessToken(authentication.getSystemName("UnKnownDoctor3"));
     }
     else {
       UnknownUserAccessToken = null;
@@ -92,19 +98,19 @@ public class FoxtrotTest_Auth
    *  Unknown username and password
    */
   @Test
-  public void Test_01_VerifyLogin()
+  public void Test_01_VerifyLogin() throws Exception
   {
     
     // Test users that should have access
-    assertThat(new AuthorizationStub().getJWTClaimsSet(pt1AccessToken).getSubject(), is("p1"));
-    JWTClaimsSet js = new AuthorizationStub().getJWTClaimsSet(pt2AccessToken);
+    assertThat(new JWTAuthorizationImpl(logger).getJWTClaimsSet(pt1AccessToken).getSubject(), is("p1"));
+    JWTClaimsSet js = new JWTAuthorizationImpl(logger).getJWTClaimsSet(pt2AccessToken);
     assertThat(js.getSubject(), is("p2"));
-    assertThat(new AuthorizationStub().getJWTClaimsSet(dt1AccessToken).getSubject(), is("d1"));
-    assertThat(new AuthorizationStub().getJWTClaimsSet(dt2AccessToken).getSubject(), is("d2"));
+    assertThat(new JWTAuthorizationImpl(logger).getJWTClaimsSet(dt1AccessToken).getSubject(), is("d1"));
+    assertThat(new JWTAuthorizationImpl(logger).getJWTClaimsSet(dt2AccessToken).getSubject(), is("d2"));
     
     // Test unknown usernames / passwords.
-    assertNull(new AuthorizationStub().getJWTClaimsSet(UnknownPwd1AcessToken));
-    assertNull(new AuthorizationStub().getJWTClaimsSet(UnknownUserAccessToken));
+    assertNull(new JWTAuthorizationImpl(logger).getJWTClaimsSet(UnknownPwd1AcessToken));
+    assertNull(new JWTAuthorizationImpl(logger).getJWTClaimsSet(UnknownUserAccessToken));
   }
   
   @Test
@@ -139,6 +145,7 @@ public class FoxtrotTest_Auth
     lastWeekList = teleMed.getObservationsFor("p1", TimeInterval.LAST_WEEK, dt2AccessToken);
     assertThat(lastWeekList, is(nullValue()));
   }
+  
   @Test
   public void Test_04_ValidateDoctorFetchPatientData()
   {
@@ -150,6 +157,25 @@ public class FoxtrotTest_Auth
     // Doctor 1 tries to get info from patient 2, which he shall NOT be allowed to
     lastWeekList = teleMed.getObservationsFor("p2",TimeInterval.LAST_WEEK , dt1AccessToken);
     assertThat(lastWeekList, is(nullValue())); 
+  }
+  
+  @Test
+  public void Test_05_ValidateDoctorCannotFetchPatientDataAfter10Seconds() throws InterruptedException
+  {
+    // Doctor 1 tries to get info from patient 1, which he shall be allowed to
+    List<TeleObservation> lastWeekList = teleMed.getObservationsFor("p1",TimeInterval.LAST_WEEK , dt1AccessToken);
+    assertThat(lastWeekList, is(notNullValue()));
+    assertThat(lastWeekList.size(), is(0));
+    
+    // Doctor 1 tries to get info from patient 2, which he shall NOT be allowed to
+    Thread.sleep(12000); // sleep for 12 seconds to invalidate accessToken
+      
+    try {
+      teleMed.getObservationsFor("p2",TimeInterval.LAST_WEEK , dt1AccessToken);
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "AccessToken has expired");
+    }
+   
   }
 
 }

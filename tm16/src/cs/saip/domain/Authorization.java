@@ -1,5 +1,7 @@
 package cs.saip.domain;
 
+import java.util.logging.Logger;
+
 /**
  * This interface is responsible for authorizing clients in the TM16 system
  * The client will get an access token, which is used to verify access. 
@@ -9,7 +11,6 @@ package cs.saip.domain;
  */
 public interface Authorization 
 {
- 
   /**
    * Will check if the client token as access to write data for patient with pId
    * 
@@ -20,8 +21,9 @@ public interface Authorization
    * @return
    *      True = Allowed to write
    *      False = Not allowed to write
+   * @throws Exception 
    */
-  public Boolean allowWritePatientData(String token, String pId);
+  public Boolean allowWritePatientData(String token, String pId) throws Exception;
   
   /**
    * Will check if the client token as access to read data for patient with pId
@@ -33,6 +35,7 @@ public interface Authorization
    * @return
    *      True = Allowed to read
    *      False = Not allowed to read
+   * @throws Exception 
    */
-  public Boolean allowReadPatientData(String token, String pId);
+  public Boolean allowReadPatientData(String token, String pId) throws Exception;
 }
