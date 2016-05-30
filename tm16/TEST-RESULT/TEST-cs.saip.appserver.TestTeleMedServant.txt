@@ -1,0 +1,8 @@
+Testsuite: cs.saip.appserver.TestTeleMedServant
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.098 sec
+
+Testcase: shouldStoreInXDS took 0.024 sec
+Testcase: shouldSupportQueryOnXDS took 0.024 sec
+Testcase: shouldHandleTimedQueries took 0.017 sec
+Testcase: shouldHandleBasicTeleStoreAPI took 0.004 sec
+Testcase: shouldSupportModificationMethods took 0.021 sec

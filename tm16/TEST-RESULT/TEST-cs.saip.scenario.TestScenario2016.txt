@@ -1,0 +1,7 @@
+Testsuite: cs.saip.scenario.TestScenario2016
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.061 sec
+
+Testcase: shouldStoreFromClient took 0.007 sec
+Testcase: shouldHandleTimedQueries took 0.015 sec
+Testcase: shouldFetchFromClient took 0.009 sec
+Testcase: shouldSupportModificationMethods took 0.025 sec

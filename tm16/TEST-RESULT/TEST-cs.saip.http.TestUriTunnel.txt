@@ -1,0 +1,15 @@
+Testsuite: cs.saip.http.TestUriTunnel
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.944 sec
+------------- Standard Error -----------------
+[Thread-0] INFO org.eclipse.jetty.util.log - Logging initialized @893ms
+[Thread-0] INFO spark.webserver.JettySparkServer - == Spark has ignited ...
+[Thread-0] INFO spark.webserver.JettySparkServer - >> Listening on 0.0.0.0:4567
+[Thread-0] INFO org.eclipse.jetty.server.Server - jetty-9.3.2.v20150730
+[Thread-0] INFO org.eclipse.jetty.server.ServerConnector - Started ServerConnector@73344808{HTTP/1.1,[http/1.1]}{0.0.0.0:4567}
+[Thread-0] INFO org.eclipse.jetty.server.Server - Started @1151ms
+[main] INFO spark.webserver.JettySparkServer - >>> Spark shutting down ...
+[main] INFO org.eclipse.jetty.server.ServerConnector - Stopped ServerConnector@73344808{HTTP/1.1,[http/1.1]}{0.0.0.0:4567}
+[main] INFO spark.webserver.JettySparkServer - done
+------------- ---------------- ---------------
+
+Testcase: shouldHandleScenario took 0.944 sec
