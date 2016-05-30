@@ -32,32 +32,32 @@ public class RestCRUDClient {
     
     // POST 
     System.out.println("Create: Perform a POST of tele observation: \n -> "+teleObs1);
-    String id = teleMed.processAndStore(teleObs1);
+    String id = teleMed.processAndStore(teleObs1, "");
     System.out.println(" -> was assigned id: "+id);
     
     // GET
     System.out.println("Read: Perform GET of id: "+id);
-    TeleObservation to = teleMed.getObservation(id);    
+    TeleObservation to = teleMed.getObservation(id, "");    
     System.out.println(" -> Returned: "+to);
 
     // PUT
     System.out.println("Update: Perform PUT of id: "+id);
     to = new TeleObservation(HelperMethods.NANCY_CPR, 227.0, 91.0);
-    boolean isValid = teleMed.correct(id, to);
+    boolean isValid = teleMed.correct(id, to, "");
     System.out.println(" -> outcome: "+isValid);
     
     // validate that contents has changed.
-    to = teleMed.getObservation(id);
+    to = teleMed.getObservation(id, "");
     System.out.println(" -> New value: "+to);
     
     if (! no_delete) {
       // DELETE
       System.out.println("Delete: Perform DELETE of id: "+id);
-      isValid = teleMed.delete(id);
+      isValid = teleMed.delete(id, "");
       System.out.println(" -> outcome: "+isValid);
 
       // validate that no observation exists with that id
-      to = teleMed.getObservation(id);
+      to = teleMed.getObservation(id, "");
       System.out.println(" -> New value: "+to);
     }
     

@@ -29,7 +29,7 @@ public class SocketClientRequestHandler implements ClientRequestHandler {
   }
 
   @Override
-  public ReplyObject sendToServer(String objectId, String operationName, String payload) {
+  public ReplyObject sendToServer(String objectId, String operationName, String accessToken, String payload ) {
     Socket clientSocket = null;
     ReplyObject replyObj = null;
     

@@ -1,21 +1,20 @@
 package cs.saip.appserver;
 
-import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import org.junit.*;
 import org.w3c.dom.Document;
 
+import cs.saip.authorization.AuthorizeAllStub;
 import cs.saip.domain.*;
 import cs.saip.doubles.FakeObjectXDSDatabase;
 import cs.saip.helper.HelperMethods;
-import cs.saip.storage.MetaData;
-import cs.saip.storage.XDSBackend;
+import cs.saip.storage.*;
 
 /**
  * Testing the server side implementation of TeleStore (servant role).
@@ -31,7 +30,7 @@ public class TestTeleMedServant {
   @Before
   public void setUp() {
     xds = new FakeObjectXDSDatabase();
-    telemed = new TeleMedServant(xds);
+    telemed = new TeleMedServant(xds, new AuthorizeAllStub());
   }
   
   /**
@@ -45,7 +44,7 @@ public class TestTeleMedServant {
     // Create an observation
     TeleObservation teleObs1 = HelperMethods.createObservation120over70forNancy();
     // Store it
-    telemed.processAndStore(teleObs1);
+    telemed.processAndStore(teleObs1, "");
     
     // Validate that the server has received the proper data and
     // that the proper XML document is stored.
@@ -73,9 +72,9 @@ public class TestTeleMedServant {
     to3 = new TeleObservation("pid017", 180, 110);
 
     // Only a single to stored
-    telemed.processAndStore(to1);
+    telemed.processAndStore(to1, "");
     
-    List<TeleObservation> lastWeekList = telemed.getObservationsFor("pid001", TimeInterval.LAST_DAY);
+    List<TeleObservation> lastWeekList = telemed.getObservationsFor("pid001", TimeInterval.LAST_DAY, "");
     assertNotNull(lastWeekList);
     
     assertThat(lastWeekList.size(), is(1));
@@ -85,18 +84,18 @@ public class TestTeleMedServant {
     assertThat(calculated1.getDiastolic().toString(), is("Diastolisk BT:78.0 mm(Hg)"));
     
     // Store more
-    telemed.processAndStore(to2);
-    telemed.processAndStore(to3);
+    telemed.processAndStore(to2, "");
+    telemed.processAndStore(to3, "");
 
     // Two observations for pid 001
-    lastWeekList = telemed.getObservationsFor("pid001", TimeInterval.LAST_DAY);
+    lastWeekList = telemed.getObservationsFor("pid001", TimeInterval.LAST_DAY, "");
     assertThat(lastWeekList.size(), is(2));
     calculated1 = lastWeekList.get(1);
     assertThat(to2.getTime(), is(calculated1.getTime()));
     assertThat(calculated1.getSystolic().toString(), is("Systolisk BT:125.0 mm(Hg)"));
     
     // Only single for pid 017
-    lastWeekList = telemed.getObservationsFor("pid017", TimeInterval.LAST_DAY);
+    lastWeekList = telemed.getObservationsFor("pid017", TimeInterval.LAST_DAY, "");
     assertThat(lastWeekList.size(), is(1));
     calculated1 = lastWeekList.get(0);
     assertThat(calculated1.getPatientId(), is("pid017"));
@@ -147,25 +146,25 @@ public class TestTeleMedServant {
     to4.setTime(ldt);
     
     // Store them
-    telestore.processAndStore(to1);
-    telestore.processAndStore(to2);
-    telestore.processAndStore(to3);
-    telestore.processAndStore(to4);
+    telestore.processAndStore(to1, "");
+    telestore.processAndStore(to2, "");
+    telestore.processAndStore(to3, "");
+    telestore.processAndStore(to4, "");
 
     // Assert that we get the proper set back
     List<TeleObservation> intervalTOList = 
-        telestore.getObservationsFor("pid001", TimeInterval.LAST_DAY);
+        telestore.getObservationsFor("pid001", TimeInterval.LAST_DAY, "");
     assertThat(intervalTOList.size(), is(2));
     assertThat(intervalTOList.get(0).getSystolic().getValue(), is(123.0));
     assertThat(intervalTOList.get(1).getSystolic().getValue(), is(125.0));
     
     intervalTOList = 
-        telestore.getObservationsFor("pid001", TimeInterval.LAST_WEEK);
+        telestore.getObservationsFor("pid001", TimeInterval.LAST_WEEK, "");
     assertThat(intervalTOList.size(), is(3));
     assertThat(intervalTOList.get(2).getSystolic().getValue(), is(180.0));
 
     intervalTOList = 
-        telestore.getObservationsFor("pid001", TimeInterval.LAST_MONTH);
+        telestore.getObservationsFor("pid001", TimeInterval.LAST_MONTH, "");
     assertThat(intervalTOList.size(), is(4));
     assertThat(intervalTOList.get(3).getSystolic().getValue(), is(193.0));
   }
@@ -200,9 +199,9 @@ public class TestTeleMedServant {
     
     // Upload all three of them
 
-    telemed.processAndStore(to1);
-    telemed.processAndStore(to2);
-    telemed.processAndStore(to3);
+    telemed.processAndStore(to1, "");
+    telemed.processAndStore(to2, "");
+    telemed.processAndStore(to3, "");
 
     // ================================================================
     // Now the server has translated them to HL7
@@ -265,13 +264,13 @@ public class TestTeleMedServant {
     to3 = new TeleObservation("pid017", 180, 110);
 
     // Store them in order
-    String id = telemed.processAndStore(to1);
+    String id = telemed.processAndStore(to1, "");
     assertThat(id, is(notNullValue()));
 
-    String id2 = telemed.processAndStore(to2);
+    String id2 = telemed.processAndStore(to2, "");
     assertThat(id2, is(notNullValue()));
 
-    id = telemed.processAndStore(to3);
+    id = telemed.processAndStore(to3, "");
     assertThat(id, is(notNullValue()));
     
     TeleObservation to;
@@ -279,24 +278,24 @@ public class TestTeleMedServant {
     // Revise the t02 observation
     to = new TeleObservation("pid001", 227.0, 91.0);
     to.setTime(LocalDateTime.of(2011, 3, 1, 7, 30));
-    boolean isValid = telemed.correct(id2, to);
+    boolean isValid = telemed.correct(id2, to, "");
     assertThat(isValid, is(true));
     
-    TeleObservation stored = telemed.getObservation(id2);
+    TeleObservation stored = telemed.getObservation(id2, "");
     assertThat(stored, is(notNullValue()));
     assertThat(stored.getSystolic().getValue(), is(227.0));
     // ensure that timestamps were NOT changed
     assertThat(to2.getTime(), is(stored.getTime()));
     
     // And remove it
-    isValid = telemed.delete(id2);
+    isValid = telemed.delete(id2, "");
     assertThat(isValid, is(true));
-    stored = telemed.getObservation(id2);
+    stored = telemed.getObservation(id2, "");
     assertThat(stored, is(nullValue()));
     
     // verify pid001's measurements
     List<TeleObservation> intervalTOList = 
-        telemed.getObservationsFor("pid001", TimeInterval.LAST_DAY);
+        telemed.getObservationsFor("pid001", TimeInterval.LAST_DAY, "");
     assertThat(intervalTOList.size(), is(1));
   }
   

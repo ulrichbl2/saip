@@ -21,8 +21,10 @@ public interface TeleMed {
    *          the tele observation to process and store
    * @return the id of the stored observation
    */
-  String processAndStore(TeleObservation teleObs);
+  String processAndStore(TeleObservation teleObs, String accessToken);
 
+//  String authenticate(String username, String password);
+  
   /**
    * Retrieve all observations for the given time interval for the given
    * patient.
@@ -73,14 +75,7 @@ public interface TeleMed {
    * @return true if the observation was found and deleted
    */
   boolean delete(String uniqueId, String accessToken);
-  
-  /**
-   * Authenticates the user in the TM16 system
-   * 
-   * @param username
-   *          The username of the user that wants to see, delete or correct observations
-   */
-  String authenticate(String username, String password);
+
 
 
 }

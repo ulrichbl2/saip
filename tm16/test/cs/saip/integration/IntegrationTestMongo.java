@@ -1,16 +1,15 @@
 package cs.saip.integration;
 
-import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertThat;
 
 import org.junit.*;
-
-import static org.hamcrest.CoreMatchers.*;
-
 import org.w3c.dom.Document;
 
 import cs.saip.appserver.*;
+import cs.saip.authorization.AuthorizeAllStub;
 import cs.saip.domain.TeleObservation;
-import cs.saip.storage.*;
+import cs.saip.storage.XDSBackend;
 import cs.saip.storage.mongo.MongoXDSAdapter;
 
 /** Integration tests requiring a running MongoDB
@@ -37,7 +36,7 @@ public class IntegrationTestMongo {
     // Wipe the DB to ensure reproducible tests
     adapter.dropTheDb("yes-i-am-testing");
     
-    telemed = new TeleMedServant(xds);
+    telemed = new TeleMedServant(xds, new AuthorizeAllStub());
   }
   
   @Test
@@ -45,7 +44,7 @@ public class IntegrationTestMongo {
     TeleObservation to = new TeleObservation("pid01", 121, 77);
     
     // Store it
-    String uniqueId = telemed.processAndStore(to);
+    String uniqueId = telemed.processAndStore(to, "");
     assertThat(uniqueId, is(notNullValue()));
     
     // Retrieve based upon ID

@@ -27,34 +27,34 @@ public class TeleMedProxy implements TeleMed, ClientProxy {
   }
 
   @Override
-  public String processAndStore(TeleObservation teleObs) {
+  public String processAndStore(TeleObservation teleObs, String accessToken) {
     String uid = requestor.sendRequestAndAwaitReply(teleObs.getPatientId(), 
-        OperationNames.PROCESS_AND_STORE_OPERATION, String.class, teleObs);
+        OperationNames.PROCESS_AND_STORE_OPERATION, String.class, accessToken, teleObs);
     return uid; 
   }
 
   @Override
-  public List<TeleObservation> getObservationsFor(String patientId, TimeInterval interval) {
+  public List<TeleObservation> getObservationsFor(String patientId, TimeInterval interval, String accessToken) {
     Type collectionType = new TypeToken<List<TeleObservation>>(){}.getType();
     return requestor.sendRequestAndAwaitReply(patientId,
-        OperationNames.GET_OBSERVATIONS_FOR_OPERATION, collectionType, interval);
+        OperationNames.GET_OBSERVATIONS_FOR_OPERATION, collectionType, accessToken, interval);
   }
 
   @Override
-  public boolean correct(String uniqueId, TeleObservation to) {
+  public boolean correct(String uniqueId, TeleObservation to, String accessToken) {
     return requestor.sendRequestAndAwaitReply(uniqueId, 
-        OperationNames.CORRECT_OPERATION, boolean.class, to);
+        OperationNames.CORRECT_OPERATION, boolean.class, accessToken, to);
   }
 
   @Override
-  public TeleObservation getObservation(String uniqueId) {
+  public TeleObservation getObservation(String uniqueId, String accessToken) {
     return requestor.sendRequestAndAwaitReply(uniqueId, 
-        OperationNames.GET_OBSERVATION_OPERATION, TeleObservation.class);
+        OperationNames.GET_OBSERVATION_OPERATION, TeleObservation.class, accessToken);
   }
 
   @Override
-  public boolean delete(String uniqueId) {
+  public boolean delete(String uniqueId, String accessToken) {
     return requestor.sendRequestAndAwaitReply(uniqueId, 
-        OperationNames.DELETE_OPERATION, boolean.class);
+        OperationNames.DELETE_OPERATION, boolean.class, accessToken);
   }
 }

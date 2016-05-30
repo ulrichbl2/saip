@@ -1,9 +1,10 @@
 package cs.saip.main;
 
 import cs.saip.appserver.*;
-import cs.saip.broker.*;
-import cs.saip.domain.TeleMed;
-import cs.saip.doubles.*;
+import cs.saip.authorization.AuthorizationStub;
+import cs.saip.broker.Invoker;
+import cs.saip.domain.*;
+import cs.saip.doubles.FakeObjectXDSDatabase;
 import cs.saip.ipc.socket.SocketServerRequestHandler;
 import cs.saip.storage.XDSBackend;
 
@@ -24,8 +25,9 @@ public class SocketServerMain {
     // Define the server side delegates
     XDSBackend xds = null;
     xds = new FakeObjectXDSDatabase();
+    Authorization atz = new AuthorizationStub();
 
-    TeleMed tsServant = new TeleMedServant(xds);
+    TeleMed tsServant = new TeleMedServant(xds, atz);
     Invoker invoker = new StandardJSONInvoker(tsServant);
 
     // Configure a socket based server request handler

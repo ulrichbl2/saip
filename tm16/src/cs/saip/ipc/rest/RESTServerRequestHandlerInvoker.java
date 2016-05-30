@@ -33,6 +33,7 @@ public class RESTServerRequestHandlerInvoker
   private TeleMed teleMed;
   private int port;
   private Gson gson;
+  private String SecurityToken;
 
   public RESTServerRequestHandlerInvoker(int portNumber,
       TeleMed tsServant, XDSBackend xds) {
@@ -53,7 +54,7 @@ public class RESTServerRequestHandlerInvoker
 
       // Demarshal parameters into a JsonArray
       TeleObservation teleObs = gson.fromJson(body, TeleObservation.class);
-      String id = teleMed.processAndStore(teleObs);
+      String id = teleMed.processAndStore(teleObs, SecurityToken);
 
       int statusCode = HttpServletResponse.SC_CREATED;
 
@@ -75,7 +76,7 @@ public class RESTServerRequestHandlerInvoker
     get(getRoute, (req, res) -> {
       String uniqueId = req.params(":id");
 
-      TeleObservation teleObs = teleMed.getObservation(uniqueId);
+      TeleObservation teleObs = teleMed.getObservation(uniqueId, SecurityToken);
 
       String returnValue = null;
       int lastStatusCode;
@@ -103,7 +104,7 @@ public class RESTServerRequestHandlerInvoker
 
       TeleObservation teleObs = gson.fromJson(body, TeleObservation.class);
 
-      boolean isValid = teleMed.correct(uniqueId, teleObs);
+      boolean isValid = teleMed.correct(uniqueId, teleObs, SecurityToken);
 
       int lastStatusCode = HttpServletResponse.SC_OK;
       if (!isValid) {
@@ -122,7 +123,7 @@ public class RESTServerRequestHandlerInvoker
     delete(deleteRoute, (req, res) -> {
       String uniqueId = req.params(":id");
 
-      boolean isValid = teleMed.delete(uniqueId);
+      boolean isValid = teleMed.delete(uniqueId, SecurityToken);
 
       int lastStatusCode = HttpServletResponse.SC_NO_CONTENT;
       if (!isValid) {
@@ -142,7 +143,7 @@ public class RESTServerRequestHandlerInvoker
       String patientId = req.params(":patientId");
 
       List<TeleObservation> theList = teleMed.getObservationsFor(patientId,
-          TimeInterval.LAST_DAY);
+          TimeInterval.LAST_DAY, SecurityToken);
 
       res.status(HttpServletResponse.SC_OK);
 

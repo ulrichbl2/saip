@@ -6,6 +6,7 @@ import java.security.*;
 import java.util.*;
 
 import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.Test;
 
@@ -15,6 +16,20 @@ import com.nimbusds.jwt.*;
 
 public class FoxtrotTest_JWT_Authorization {
 
+  @Test
+  public void Test_00_CreateStaticAes256Key() {
+    try {
+      // Generate 256-bit AES key for HMAC as well as encryption
+      KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+      keyGen.init(256);
+      SecretKey secretKey = keyGen.generateKey();
+      System.out.println(Base64.getEncoder().encodeToString(secretKey.getEncoded()));
+    } catch (NoSuchAlgorithmException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+ 
   @Test
   public void Test_01_HelloWorld() {
     // Generate random 256-bit (32-byte) shared secret
@@ -37,6 +52,7 @@ public class FoxtrotTest_JWT_Authorization {
       // eyJhbGciOiJIUzI1NiJ9.SGVsbG8sIHdvcmxkIQ.onO9Ihudz3WkiauDO2Uhyuz0Y18UASXlSc1eS0NkWyA
       String s = jwsObject.serialize();
       System.out.println(s);
+      System.out.println("Secret: " + sharedSecret.toString());
 
 
       // To parse the JWS and verify it, e.g. on client-side
@@ -64,7 +80,9 @@ public class FoxtrotTest_JWT_Authorization {
       // Generate 256-bit AES key for HMAC as well as encryption
       KeyGenerator keyGen = KeyGenerator.getInstance("AES");
       keyGen.init(256);
-      SecretKey secretKey = keyGen.generateKey();
+      String b64enCodedSecretKey = "WGL9etjEpH5mfC+SmgsUZOZiO7TVxcg8BZE1OTRSjq4=";
+      byte[] encodedKey = Base64.getDecoder().decode(b64enCodedSecretKey);
+      SecretKey secretKey = new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES");
 
       // Create HMAC signer
       JWSSigner signer = new MACSigner(secretKey.getEncoded());
@@ -72,8 +90,10 @@ public class FoxtrotTest_JWT_Authorization {
       // Prepare JWT with claims set
       Date now = new Date();
       JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-          .subject("joe")
+          .subject("doctorID")
           .expirationTime(new Date(now.getTime() + 4 * Calendar.HOUR)) // set expiration to 4 hours
+          
+          // add claimsset for all patients in patientLIst
           .claim("http://example.com/is_root", true)
           .issueTime(now)
           .issuer("https://c2id.com")
@@ -115,12 +135,14 @@ public class FoxtrotTest_JWT_Authorization {
       assertTrue(signedJWT.verify(new MACVerifier(secretKey.getEncoded())));
 
       // Retrieve the JWT claims...
-      assertEquals("joe", signedJWT.getJWTClaimsSet().getSubject());
+      assertEquals("doctorID", signedJWT.getJWTClaimsSet().getSubject());
     } catch (Exception e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
   }
+  
+
 
 }

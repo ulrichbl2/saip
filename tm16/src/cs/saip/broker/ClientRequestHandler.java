@@ -23,10 +23,10 @@ public interface ClientRequestHandler {
    * @param operationName
    *          the operation to perform (=method)
    * @param payload
-   *          the marshaled object representing the operation
+   *          the marshaled object representing the operation 
    * @return a reply from the remote component
    * @throws IPCException
    *           in case some error happened in the IPC
    */
-  public ReplyObject sendToServer(String objectId, String operationName, String payload);
+  public ReplyObject sendToServer(String objectId, String operationName, String accessToken, String payload);
 }

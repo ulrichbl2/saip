@@ -1,7 +1,7 @@
 package cs.saip.http;
 
 import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 import java.util.List;
 
@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.junit.*;
 
 import cs.saip.appserver.*;
+import cs.saip.authorization.AuthorizeAllStub;
 import cs.saip.broker.*;
 import cs.saip.client.*;
 import cs.saip.domain.*;
@@ -38,7 +39,7 @@ public class TestUriTunnel {
   public void setup() {
     // Server side roles
     FakeObjectXDSDatabase xds = new FakeObjectXDSDatabase();
-    TeleMed tsServant = new TeleMedServant(xds);
+    TeleMed tsServant = new TeleMedServant(xds, new AuthorizeAllStub());
     StandardJSONInvoker invoker = new StandardJSONInvoker(tsServant);
 
     serverRequestHandler = new UriTunnelServerRequestHandler(invoker, xds, PORT_NUMBER);
@@ -61,7 +62,7 @@ public class TestUriTunnel {
     TeleObservation teleObs1 = new TeleObservation(HelperMethods.NANCY_CPR, 127.3, 93);
     
     // Upload
-    String id2 = teleMed.processAndStore(teleObs1);
+    String id2 = teleMed.processAndStore(teleObs1, "");
     // Verify that CREATED code was returned
     assertThat(serverRequestHandler.lastStatusCode(), is(HttpServletResponse.SC_CREATED));
     assertThat(serverRequestHandler.lastHTTPVerb(), is("POST"));
@@ -69,7 +70,7 @@ public class TestUriTunnel {
     assertThat(id2, is(notNullValue()));
     
     // Download
-    List<TeleObservation> l = teleMed.getObservationsFor(HelperMethods.NANCY_CPR, TimeInterval.LAST_DAY);
+    List<TeleObservation> l = teleMed.getObservationsFor(HelperMethods.NANCY_CPR, TimeInterval.LAST_DAY, "");
 
     // Verify it is correctly fetched
     assertThat(l, is(notNullValue()));

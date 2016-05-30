@@ -19,14 +19,14 @@ public class LocalMethodCallClientRequestHandler implements ClientRequestHandler
   private Invoker invoker;
   private ReplyObject lastReply;
 
-  public LocalMethodCallClientRequestHandler(Invoker invoker) {
+  public LocalMethodCallClientRequestHandler(Invoker invoker) { 
     this.invoker = invoker;
   }
 
   @Override
-  public ReplyObject sendToServer(String objectId, String operationName, String onTheWireFormat) {
+  public ReplyObject sendToServer(String objectId, String operationName, String accessToken, String onTheWireFormat) {
     // The send to the server can be mimicked by a direct method call...
-    lastReply = invoker.handleRequest(objectId, operationName, onTheWireFormat);
+    lastReply = invoker.handleRequest(objectId, operationName, accessToken, onTheWireFormat);
     return lastReply;
   }
 

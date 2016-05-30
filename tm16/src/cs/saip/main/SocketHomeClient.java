@@ -36,9 +36,9 @@ public class SocketHomeClient {
 
     if (operation.equals("store")) {
       TeleObservation to = new TeleObservation(patientId, systolic, diastolic);
-      ts.processAndStore(to);
+      ts.processAndStore(to, "");
     } else {
-      List<TeleObservation> teleObsList = ts.getObservationsFor(patientId, TimeInterval.LAST_WEEK);
+      List<TeleObservation> teleObsList = ts.getObservationsFor(patientId, TimeInterval.LAST_WEEK, "");
       teleObsList.stream().forEach( (to) -> {
         System.out.println(to);
       });

@@ -1,9 +1,10 @@
 package cs.saip.main;
 
 import cs.saip.appserver.*;
-import cs.saip.broker.*;
+import cs.saip.authorization.AuthorizeAllStub;
+import cs.saip.broker.Invoker;
 import cs.saip.domain.TeleMed;
-import cs.saip.doubles.*;
+import cs.saip.doubles.FakeObjectXDSDatabase;
 import cs.saip.ipc.http.UriTunnelServerRequestHandler;
 import cs.saip.storage.XDSBackend;
 import cs.saip.storage.mongo.MongoXDSAdapter;
@@ -40,7 +41,7 @@ public class ServerMain {
       xds = new MongoXDSAdapter(type, 27017);
     }
     // Create server side implementation of Broker roles
-    TeleMed tsServant = new TeleMedServant(xds);
+    TeleMed tsServant = new TeleMedServant(xds, new AuthorizeAllStub());
     Invoker invoker = new StandardJSONInvoker(tsServant);
     UriTunnelServerRequestHandler srh = 
         new UriTunnelServerRequestHandler(invoker, xds, port);

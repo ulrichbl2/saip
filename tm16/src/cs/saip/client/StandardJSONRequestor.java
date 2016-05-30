@@ -24,14 +24,14 @@ public class StandardJSONRequestor implements Requestor {
 
   @Override
   public <T> T sendRequestAndAwaitReply(String objectId, String operationName,
-      Type typeOfReturnValue, Object... argument) {
+      Type typeOfReturnValue, String accessToken, Object... argument) {
     // Marshall all parameters into a JSONArray of potentially mixed types
     String asJson = gson.toJson(argument);
 
     T returnValue = null;
     // Do the IPC to the server using my client request handler
     ReplyObject replyFrom = clientRequestHandler.sendToServer(objectId,
-        operationName, asJson);
+        operationName, accessToken, asJson);
 
     // First, verify that the request succeeded
     if (!replyFrom.isSuccess()) {

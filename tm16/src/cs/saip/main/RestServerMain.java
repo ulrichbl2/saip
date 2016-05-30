@@ -1,10 +1,10 @@
 package cs.saip.main;
 
-import cs.saip.appserver.*;
-import cs.saip.broker.*;
-import cs.saip.domain.TeleMed;
-import cs.saip.doubles.*;
-import cs.saip.ipc.rest.*;
+import cs.saip.appserver.TeleMedServant;
+import cs.saip.authorization.AuthorizationStub;
+import cs.saip.domain.*;
+import cs.saip.doubles.FakeObjectXDSDatabase;
+import cs.saip.ipc.rest.RESTServerRequestHandlerInvoker;
 import cs.saip.storage.XDSBackend;
 
 /** Jetty/Spark-java based server responding to REST calls.
@@ -31,7 +31,9 @@ public class RestServerMain {
     // Define the server side delegates
     XDSBackend xds = null;
     xds = new FakeObjectXDSDatabase();
-    TeleMed tsServant = new TeleMedServant(xds);
+    Authorization atz = new AuthorizationStub();
+    
+    TeleMed tsServant = new TeleMedServant(xds, atz);
 
     // Configure the Spark-java servlet
     int port = Integer.parseInt(portNo);

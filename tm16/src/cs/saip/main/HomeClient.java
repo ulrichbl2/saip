@@ -38,7 +38,7 @@ public class HomeClient {
     TeleObservation to = new TeleObservation(patientId, systolic, diastolic);
     
     // and ask the TeleMed system to store it
-    teleMed.processAndStore(to);
+    teleMed.processAndStore(to, "");
   
     System.out.println("HomeClient - completed.");
   }

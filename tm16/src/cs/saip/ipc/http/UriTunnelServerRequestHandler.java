@@ -53,7 +53,7 @@ public class UriTunnelServerRequestHandler implements ServerRequestHandler {
       // The incoming body is a full request object to be demarshaled
       RequestObject p = gson.fromJson(body, RequestObject.class);
 
-      ReplyObject reply = invoker.handleRequest(p.getObjectId(), p.getOperationName(), p.getPayload());
+      ReplyObject reply = invoker.handleRequest(p.getObjectId(), p.getOperationName(), "", p.getPayload());
       lastVerb = req.requestMethod();
       lastStatusCode = reply.getStatusCode();
       

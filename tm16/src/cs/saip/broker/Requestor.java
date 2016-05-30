@@ -30,6 +30,6 @@ public interface Requestor {
    *          the arguments to the method call
    * @return the return value of the type given by typeOfReturnValue
    */
-  <T> T sendRequestAndAwaitReply(String objectId, String operationName, Type typeOfReturnValue, Object... argument);
+  <T> T sendRequestAndAwaitReply(String objectId, String operationName, Type typeOfReturnValue, String accessToken, Object... argument);
 
 }

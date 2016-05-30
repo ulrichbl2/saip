@@ -24,7 +24,7 @@ public class UriTunnelClientRequestHandler implements ClientRequestHandler {
   }
 
   @Override
-  public ReplyObject sendToServer(String objectId, String operationName, String payload) {
+  public ReplyObject sendToServer(String objectId, String operationName, String accessToken, String payload) {
     HttpResponse<JsonNode> jsonResponse = null;
     ReplyObject reply = null;
     

@@ -24,6 +24,7 @@ public class TeleMedRESTProxy implements TeleMed {
 
   private String baseURL;
   private Gson gson;
+  private String UserToken;
 
   public TeleMedRESTProxy(String hostname, int port) {
     baseURL = "http://"+hostname+":"+port+"/";
@@ -31,7 +32,7 @@ public class TeleMedRESTProxy implements TeleMed {
   }
 
   @Override
-  public String processAndStore(TeleObservation teleObs) {
+  public String processAndStore(TeleObservation teleObs, String accessToken) {
     String payload = gson.toJson(teleObs);
     HttpResponse<JsonNode> jsonResponse = null;
 
@@ -61,7 +62,7 @@ public class TeleMedRESTProxy implements TeleMed {
   }
 
   @Override
-  public TeleObservation getObservation(String uniqueId) {
+  public TeleObservation getObservation(String uniqueId, String accessToken) {
     HttpResponse<JsonNode> jsonResponse = null;
 
     String path = Constants.BLOODPRESSURE_PATH + uniqueId;
@@ -85,14 +86,14 @@ public class TeleMedRESTProxy implements TeleMed {
   }
 
   @Override
-  public List<TeleObservation> getObservationsFor(String patientId, TimeInterval interval) {
+  public List<TeleObservation> getObservationsFor(String patientId, TimeInterval interval, String accessToken) {
     // TODO Implementation of 'getObservationsFor' pending
     return null;
   }
 
 
   @Override
-  public boolean correct(String uniqueId, TeleObservation teleObs) {
+  public boolean correct(String uniqueId, TeleObservation teleObs, String accessToken) {
     String payload = gson.toJson(teleObs);
     HttpResponse<JsonNode> jsonResponse = null;
 
@@ -114,7 +115,7 @@ public class TeleMedRESTProxy implements TeleMed {
   }
 
   @Override
-  public boolean delete(String uniqueId) {
+  public boolean delete(String uniqueId, String accessToken) {
     String path = Constants.BLOODPRESSURE_PATH + uniqueId;
 
     HttpResponse<JsonNode> jsonResponse = null;

@@ -74,7 +74,7 @@ public class SocketServerRequestHandler implements Runnable, ServerRequestHandle
       System.err.println("Server read a null string from the socket???");
     } else {
       RequestObject p = gson.fromJson(inputLine, RequestObject.class);
-      reply = invoker.handleRequest(p.getObjectId(), p.getOperationName(), p.getPayload());
+      reply = invoker.handleRequest(p.getObjectId(), p.getOperationName(), "", p.getPayload());
 
       System.out.println("--< replied: " + reply);
     }

@@ -1,7 +1,7 @@
 package cs.saip.scenario;
 
-import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 import cs.saip.appserver.*;
+import cs.saip.authorization.AuthorizeAllStub;
 import cs.saip.broker.*;
 import cs.saip.client.*;
 import cs.saip.domain.*;
@@ -31,7 +32,7 @@ public class TestXDSFailureMode {
     XDSBackend xdsf = new FakeObjectXDSDatabase();
     // And wrap it in a saboteur (Meszaros)
     SaboteurXDS xds = new SaboteurXDS(xdsf);
-    TeleMed tsServant = new TeleMedServant(xds);
+    TeleMed tsServant = new TeleMedServant(xds, new AuthorizeAllStub());
     Invoker invoker = new StandardJSONInvoker(tsServant);
     
     LocalMethodCallClientRequestHandler clientRequestHandler = 
@@ -45,7 +46,7 @@ public class TestXDSFailureMode {
     xds.failOnMethodOfType(1);
     
     try {
-      telemed.processAndStore(teleObs1);
+      telemed.processAndStore(teleObs1, "");
       fail("Should throw TeleMedExcpetion");
     } catch (IPCException e) {
       ReplyObject lastReply = clientRequestHandler.lastReply();

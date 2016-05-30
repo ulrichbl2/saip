@@ -23,8 +23,11 @@ public interface Invoker {
    * @param payload
    *          the raw payload in the request message, to be demarshaled into
    *          proper parameters 
+   * @param accessToken
+   *          the access token to identify the client, which makes the request        
+   * 
    * 
    * @return a reply object representing the outcome of the invocation
    */
-  ReplyObject handleRequest(String objectId, String operationName, String payload);
+  ReplyObject handleRequest(String objectId, String operationName, String accessToken, String payload);
 }

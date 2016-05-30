@@ -27,7 +27,7 @@ public class StandardJSONInvoker implements Invoker {
   }
 
   @Override
-  public ReplyObject handleRequest(String objectId, String operationName, String payloadJSONArray) {
+  public ReplyObject handleRequest(String objectId, String operationName, String accessToken, String payloadJSONArray) {
     ReplyObject reply = null;
 
     /*
@@ -52,14 +52,14 @@ public class StandardJSONInvoker implements Invoker {
         // Parameter convention: [0] = TeleObservation
         TeleObservation ts = gson.fromJson(array.get(0), TeleObservation.class);
 
-        String uid = teleMed.processAndStore(ts);
+        String uid = teleMed.processAndStore(ts, accessToken);
         reply = new ReplyObject(201, gson.toJson(uid));
 
       } else if (operationName.equals(OperationNames.GET_OBSERVATIONS_FOR_OPERATION)) {
         // Parameter convention: [0] = time interval
         TimeInterval interval = gson.fromJson(array.get(0), TimeInterval.class);
 
-        List<TeleObservation> tol = teleMed.getObservationsFor(objectId, interval);
+        List<TeleObservation> tol = teleMed.getObservationsFor(objectId, interval, accessToken);
         int statusCode = (tol == null || tol.size() == 0) ? 404 : 200;
         reply = new ReplyObject(statusCode, gson.toJson(tol));
 
@@ -67,20 +67,20 @@ public class StandardJSONInvoker implements Invoker {
         // Parameter convention: [0] = tele observation
         TeleObservation to = gson.fromJson(array.get(0), TeleObservation.class);
 
-        boolean isValid = teleMed.correct(objectId, to);
+        boolean isValid = teleMed.correct(objectId, to, accessToken);
         reply = new ReplyObject(200, gson.toJson(isValid));
 
       } else if (operationName.equals(OperationNames.GET_OBSERVATION_OPERATION)) {
         // Parameter: none
 
-        TeleObservation to = teleMed.getObservation(objectId);
+        TeleObservation to = teleMed.getObservation(objectId, accessToken);
         int statusCode = (to == null) ? 404 : 200;
         reply = new ReplyObject(statusCode, gson.toJson(to));
 
       } else if (operationName.equals(OperationNames.DELETE_OPERATION)) {
         // Parameter: none
 
-        boolean isValid = teleMed.delete(objectId);
+        boolean isValid = teleMed.delete(objectId, accessToken);
         reply = new ReplyObject(200, gson.toJson(isValid));
         // More correctly, it should be 204: no contents, but most HTTP
         // libraries will then not send any payload, breaking the

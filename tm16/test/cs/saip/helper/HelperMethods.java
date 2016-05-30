@@ -29,6 +29,13 @@ public class HelperMethods {
     to.setTime(LocalDateTime.of(2012, 6, 1, 7, 30, 00));
     return to;
   }
+  
+  public static TeleObservation createObservation120over70forPID(String PatientId)
+  {
+    TeleObservation to = new TeleObservation(PatientId, 120.0, 70.0);
+    to.setTime(LocalDateTime.of(2012, 6, 1, 7, 30, 00));
+    return to;
+  }
 
   /** Validate that an HL7 document contains the tags containing information
    * for Nancy's blood pressure of 120 over 70.

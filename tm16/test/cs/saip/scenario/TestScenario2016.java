@@ -3,12 +3,13 @@ package cs.saip.scenario;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
-import java.util.*;
+import java.util.List;
 
 import org.junit.*;
 import org.w3c.dom.Document;
 
 import cs.saip.appserver.*;
+import cs.saip.authorization.AuthorizeAllStub;
 import cs.saip.broker.*;
 import cs.saip.client.*;
 import cs.saip.domain.*;
@@ -33,10 +34,11 @@ public class TestScenario2016 {
 
   @Before 
   public void setup() {
+    
     teleObs1 = HelperMethods.createObservation120over70forNancy();
     // Create server side implementations
     xds = new FakeObjectXDSDatabase();
-    TeleMed teleMedServant = new TeleMedServant(xds);
+    TeleMed teleMedServant = new TeleMedServant(xds, new AuthorizeAllStub());
 
     // Server side broker implementations
     Invoker invoker = new StandardJSONInvoker(teleMedServant);
@@ -52,7 +54,7 @@ public class TestScenario2016 {
   @Test
   public void shouldStoreFromClient() {
     // Nancy uploads a single observation 
-    teleMed.processAndStore(teleObs1);
+    teleMed.processAndStore(teleObs1, "");
     
     // And the proper HL7 document is stored in the backend XDS
     Document stored = xds.getLastStoredObservation();
@@ -66,13 +68,13 @@ public class TestScenario2016 {
     to2 = new TeleObservation("pid001", 125, 75);
   
     // Store two observations
-    teleMed.processAndStore(to1);
-    teleMed.processAndStore(to2);
+    teleMed.processAndStore(to1, "");
+    teleMed.processAndStore(to2, "");
     
-    List<TeleObservation> lastWeekList = teleMed.getObservationsFor("pid001", TimeInterval.LAST_DAY);
+    List<TeleObservation> lastWeekList = teleMed.getObservationsFor("pid001", TimeInterval.LAST_DAY, "");
     assertThat(lastWeekList, is(notNullValue()));
 
-    assertThat(lastWeekList.size(), is(2));
+    assertThat(lastWeekList.size(),  is(2));
     TeleObservation obs;
     obs = lastWeekList.get(0);
     assertThat(obs.getPatientId(), is("pid001"));

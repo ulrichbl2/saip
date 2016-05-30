@@ -1,6 +1,6 @@
 package cs.saip.scenario;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.*;
 
 /** Initial tests for failure modes in IPC,
@@ -12,6 +12,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import cs.saip.appserver.*;
+import cs.saip.authorization.AuthorizeAllStub;
 import cs.saip.broker.*;
 import cs.saip.client.*;
 import cs.saip.domain.*;
@@ -30,7 +31,7 @@ public class TestIPCFailureMode {
   public void setup() {
     // Create server side implementations
     xds = new FakeObjectXDSDatabase();
-    TeleMed tsServant = new TeleMedServant(xds);
+    TeleMed tsServant = new TeleMedServant(xds, new AuthorizeAllStub());
 
     // Server side broker implementations
     Invoker invoker = new StandardJSONInvoker(tsServant);
@@ -49,7 +50,7 @@ public class TestIPCFailureMode {
   public void test() {
     teleObs1 = HelperMethods.createObservation120over70forNancy();
     try {
-      telemed.processAndStore(teleObs1);
+      telemed.processAndStore(teleObs1, "");
       fail("Should throw TeleMedExcpetion");
     } catch (IPCException e) {
       assertThat(e.getMessage(), containsString("nasty communication error"));
@@ -64,7 +65,7 @@ public class TestIPCFailureMode {
 
     @Override
     public ReplyObject sendToServer(String objectId, String operationName,
-        String payload) {
+        String accessToken, String payload) {
       throw new IPCException("Send failed due to nasty communication error");
     }
 
