@@ -111,7 +111,7 @@ public class FoxtrotTest_Auth
   public void Test_02_ValidPatientSaveData()
   {
     TeleObservation teleObs = new TeleObservation("p1", 123, 78); 
-    String storeId = teleMed.processAndStore(teleObs, pt1AccessToken.toString());
+    String storeId = teleMed.processAndStore(teleObs, pt1AccessToken);
     assertThat(storeId, not("-1"));
     assertThat(storeId, not(""));
   }
@@ -120,12 +120,12 @@ public class FoxtrotTest_Auth
   {
     // First store some data. 
     TeleObservation teleObs = new TeleObservation("p1", 123, 78); 
-    String storeId = teleMed.processAndStore(teleObs, dt1AccessToken.toString());
+    String storeId = teleMed.processAndStore(teleObs, dt1AccessToken);
     assertThat(storeId, not("-1"));
     assertThat(storeId, not(""));
     
     // Try to fetch data again for a doctor who has access to patient data
-    List<TeleObservation> lastWeekList = teleMed.getObservationsFor("p1", TimeInterval.LAST_WEEK, dt1AccessToken.toString());
+    List<TeleObservation> lastWeekList = teleMed.getObservationsFor("p1", TimeInterval.LAST_WEEK, dt1AccessToken);
     
     // Verify that data are correct
     assertThat(lastWeekList, is(notNullValue()));
@@ -136,19 +136,19 @@ public class FoxtrotTest_Auth
     assertThat(obs.getSystolic().toString(), is("Systolisk BT:123.0 mm(Hg)"));
     
     // Try to fetch data again, for a doctor who no NOT have access to patient data
-    lastWeekList = teleMed.getObservationsFor("p1", TimeInterval.LAST_WEEK, dt2AccessToken.toString());
+    lastWeekList = teleMed.getObservationsFor("p1", TimeInterval.LAST_WEEK, dt2AccessToken);
     assertThat(lastWeekList, is(nullValue()));
   }
   @Test
   public void Test_04_ValidateDoctorFetchPatientData()
   {
     // Doctor 1 tries to get info from patient 1, which he shall be allowed to
-    List<TeleObservation> lastWeekList = teleMed.getObservationsFor("p1",TimeInterval.LAST_WEEK , dt1AccessToken.toString());
+    List<TeleObservation> lastWeekList = teleMed.getObservationsFor("p1",TimeInterval.LAST_WEEK , dt1AccessToken);
     assertThat(lastWeekList, is(notNullValue()));
     assertThat(lastWeekList.size(), is(0));
     
     // Doctor 1 tries to get info from patient 2, which he shall NOT be allowed to
-    lastWeekList = teleMed.getObservationsFor("p2",TimeInterval.LAST_WEEK , dt1AccessToken.toString());
+    lastWeekList = teleMed.getObservationsFor("p2",TimeInterval.LAST_WEEK , dt1AccessToken);
     assertThat(lastWeekList, is(nullValue())); 
   }
 

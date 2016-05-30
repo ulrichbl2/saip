@@ -58,23 +58,29 @@ public class AuthorizationStub implements Authorization {
     // Parse accessToken to JWT claimsset
     JWTClaimsSet jss = getJWTClaimsSet(accessToken);
 
-    // Check if the accessToken is in the map
-    if(AuthorizationMap.containsKey(jss.getSubject()))
-    {
-      // Get the access rights for the token
-      Boolean read;
-      try {
-        read = jss.getBooleanClaim("r:" + pId);
-      } catch (ParseException e) {
-        read = false;
+    if (jss != null) {
+      // Check if the accessToken is in the map
+      if(AuthorizationMap.containsKey(jss.getSubject()))
+      {
+        // Get the access rights for the token
+        Boolean read = false;
+        try {
+          read = jss.getBooleanClaim("r:" + pId);
+        } catch (ParseException e) {
+          read = false;
+        }
+        Boolean write = false;
+        try {
+          write = jss.getBooleanClaim("w:" + pId);
+        } catch (ParseException e) {
+          write = false;
+        } 
+        if (read == null)
+          read = false;
+        if (write == null)
+          write = false;
+        return (read || write);
       }
-      Boolean write;
-      try {
-        write = jss.getBooleanClaim("w:" + pId);
-      } catch (ParseException e) {
-        write = false;
-      } 
-      return (read || write);
     }
     return false;
   }
